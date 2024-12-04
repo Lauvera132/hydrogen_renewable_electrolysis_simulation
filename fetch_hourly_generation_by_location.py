@@ -1,14 +1,16 @@
 # Laura Rivera LR28372
 # final project for ME 397: Too Big to Excel
 
-# fetch hourly generation by location
+# fetch hourly wind and solar generation by location using Renewables Ninja API
+# assumes data fetch for multiple years with a separate API request for each year
+# assumes 1000 kw solar and 1500 kw wind capacity
 
 import requests
 import json
 import pandas as pd
 from io import StringIO
 
-def get_coordinates(city, state):
+def get_coordinates_from_city_state(city, state):
     geocoding_url = "http://api.positionstack.com/v1/forward"
     params = {
         'access_key': '1db5a937b624043d89aecd08a833abee',
@@ -25,8 +27,8 @@ def get_coordinates(city, state):
         raise ValueError("Could not get coordinates for the given location")
 
 
-def fetch_renewables_ninja_data(city, state):
-    latitude, longitude = get_coordinates(city, state)
+def fetch_renewables_ninja_data(city, state, year):
+    latitude, longitude = get_coordinates_from_city_state(city, state)
     token = 'a028a1d5cb59daddeaba99f3ed7b608bdfc0cad2'
     api_base = 'https://www.renewables.ninja/api/'
     
@@ -38,8 +40,8 @@ def fetch_renewables_ninja_data(city, state):
     args_pv = {
         'lat': latitude,
         'lon': longitude,
-        'date_from': '2020-01-01',
-        'date_to': '2020-12-31',
+        'date_from': f'{year}-01-01',
+        'date_to': f'{year}-12-31',
         'dataset': 'merra2',
         'capacity': 1000,
         'system_loss': 0.1,
@@ -68,12 +70,12 @@ def fetch_renewables_ninja_data(city, state):
     args_wind = {
         'lat': latitude,
         'lon': longitude,
-        'date_from': '2020-01-01',
-        'date_to': '2020-12-31',
+        'date_from': f'{year}-01-01',
+        'date_to': f'{year}-12-31',
         'dataset': 'merra2',
         'capacity': 1500,
         'height': 100,
-        'turbine': 'GE 1.5sl',
+        'turbine': 'GE 1.5sl', #https://en.wind-turbine-models.com/turbines/20-ge-vernova-ge-1.5sl
         'format': 'json'
     }
     response_wind = s.get(url_wind, params=args_wind)
@@ -93,16 +95,32 @@ def fetch_renewables_ninja_data(city, state):
     
     # Combine solar PV and wind data
     df_combined = pd.merge(data_pv, data_wind, on='time', suffixes=('_pv', '_wind'))
-    
     return df_combined
+
+def fetch_data_for_years(city, state, years):
+    data_frames = []
+    for year in years:
+        try:
+            df_combined = fetch_renewables_ninja_data(city, state, year)
+            data_frames.append(df_combined)
+        except json.JSONDecodeError:
+            raise Exception(f"Error decoding JSON response for data in year {year}")
+        except Exception as e:
+            print(f"An error occurred for year {year}: {e}")
+    
+    # Combine all yearly data into a single DataFrame
+    final_df = pd.concat(data_frames, ignore_index=True)
+    return final_df
 
 # test the function with Austin, TX
 if __name__ == "__main__":
     city = "Austin"
     state = "TX"
+    years = [2021, 2022]
     try:
-        data = fetch_renewables_ninja_data(city, state)
+        data = fetch_data_for_years(city, state, years)
         print("Data:")
         print(data.head())
+        print(data.tail())
     except Exception as e:
         print(f"An error occurred: {e}")
