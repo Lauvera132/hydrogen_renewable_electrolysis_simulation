@@ -1,9 +1,9 @@
-# https://www.ferc.gov/power-sales-and-markets/rtos-and-isos
-# https://www.spp.org/documents/62914/rto%20and%20western%20rc%20footprint%20w%20planned%20expansion.png
-
 # RTO/ISO regions manage regional electricity markets and transmission planning overseen by the Federal Energy Regulatory Commission (FERC).
 # RTO/ISO regions do not cover all states nor adhere to state geographic boundaries, and some states are covered by multiple RTO/ISO regions.
 # For simplicity, a best fit for an RTO/ISO region was determined for each state, but the actual RTO/ISO region may vary.
+
+# https://www.ferc.gov/power-sales-and-markets/rtos-and-isos
+# https://www.spp.org/documents/62914/rto%20and%20western%20rc%20footprint%20w%20planned%20expansion.png
 
 from PIL import Image
 

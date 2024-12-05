@@ -1,6 +1,3 @@
-# Laura Rivera LR28372
-# final project for ME 397: Too Big to Excel
-
 # fetch hourly wind and solar generation by location using Renewables Ninja API
 # assumes data fetch for multiple years with a separate API request for each year
 # assumes 1000 kw solar, no tracking, 0.1 system loss, tilt angle = latitude (degree);
