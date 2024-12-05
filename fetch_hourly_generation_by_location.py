@@ -3,12 +3,14 @@
 
 # fetch hourly wind and solar generation by location using Renewables Ninja API
 # assumes data fetch for multiple years with a separate API request for each year
-# assumes 1000 kw solar and 1500 kw wind capacity
+# assumes 1000 kw solar, no tracking, 0.1 system loss, tilt angle = latitude (degree);
+# assumes 1500 kw wind capacity, GE 1.5sl turbine model, at 100 m hub height
 
 import requests
 import json
 import pandas as pd
 from io import StringIO
+import time
 
 def get_coordinates_from_city_state(city, state):
     geocoding_url = "http://api.positionstack.com/v1/forward"
@@ -103,6 +105,7 @@ def fetch_data_for_years(city, state, years):
         try:
             df_combined = fetch_renewables_ninja_data(city, state, year)
             data_frames.append(df_combined)
+            time.sleep(1)  # Wait for 1 second after each request
         except json.JSONDecodeError:
             raise Exception(f"Error decoding JSON response for data in year {year}")
         except Exception as e:
