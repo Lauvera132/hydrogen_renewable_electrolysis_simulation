@@ -11,6 +11,9 @@ import json
 import pandas as pd
 from io import StringIO
 import time
+from datetime import datetime
+import pytz
+from timezonefinder import TimezoneFinder
 
 def get_coordinates_from_city_state(city, state):
     geocoding_url = "http://api.positionstack.com/v1/forward"
@@ -77,7 +80,7 @@ def fetch_renewables_ninja_data(city, state, year):
         'dataset': 'merra2',
         'capacity': 1500,
         'height': 100,
-        'turbine': 'GE 1.5sl', #https://en.wind-turbine-models.com/turbines/20-ge-vernova-ge-1.5sl
+        'turbine': 'GE 1.5sl',
         'format': 'json'
     }
     response_wind = s.get(url_wind, params=args_wind)
@@ -97,6 +100,13 @@ def fetch_renewables_ninja_data(city, state, year):
     
     # Combine solar PV and wind data
     df_combined = pd.merge(data_pv, data_wind, on='time', suffixes=('_pv', '_wind'))
+    
+    # Convert UTC time to local time
+    tf = TimezoneFinder() # Create a TimezoneFinder object
+    local_tz = pytz.timezone(tf.timezone_at(lat=latitude, lng=longitude)) # Get the local timezone using coordinates
+    df_combined['time'] = pd.to_datetime(df_combined['time']) # Convert time to datetime
+    df_combined['time'] = df_combined['time'].apply(lambda x: x.tz_localize(pytz.utc).astimezone(local_tz).replace(tzinfo=None)) # Convert time to local timezone
+    
     return df_combined
 
 def fetch_data_for_years(city, state, years):
