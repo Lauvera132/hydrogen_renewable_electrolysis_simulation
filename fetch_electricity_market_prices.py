@@ -16,7 +16,17 @@ def get_iso_ne_rt_lmp(years):
             index_col="Local Timestamp Eastern Time (Interval Beginning)",
         )
         data_frames.append(df)
-    return pd.concat(data_frames)
+    
+    combined_df = pd.concat(data_frames)
+    
+    # Check for missing hours
+    full_range = pd.date_range(start=combined_df.index.min(), end=combined_df.index.max(), freq='H')
+    missing_hours = full_range.difference(combined_df.index)
+    
+    if not missing_hours.empty:
+        print(f"Missing hours: {missing_hours}")
+    
+    return combined_df
 
 
 # test the function
