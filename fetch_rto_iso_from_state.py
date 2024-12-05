@@ -5,17 +5,31 @@
 # RTO/ISO regions do not cover all states nor adhere to state geographic boundaries, and some states are covered by multiple RTO/ISO regions.
 # For simplicity, a best fit for an RTO/ISO region was determined for each state, but the actual RTO/ISO region may vary.
 
+from PIL import Image
+
 def get_iso_rto(state_abbr):
     if state_abbr in state_iso_rto:
         iso_rto = state_iso_rto[state_abbr]['iso_rto']
         if iso_rto == 'Non-RTO/ISO_Region':
-            print("You are in a non-RTO/ISO region.")
+            print("You are in a non-RTO/ISO region. Please select which RTO/ISO regional market you'd like to simulate.")
+            available_regions = ['CAISO', 'ISO-NE', 'SPP', 'NYISO', 'ERCOT', 'PJM', 'MISO']
+            print("Available regions:", ", ".join(available_regions))
+            
+            # Show the image to the user
+            img = Image.open('ferc_iso_rto_map.png')
+            img.show()
+
+            user_choice = input("Enter your choice: ")
+            while user_choice not in available_regions:
+                print("Invalid choice. Please select from the available regions.")
+                user_choice = input("Enter your choice: ")
+            return user_choice
         return iso_rto
     else:
         return "State abbreviation not found in the dictionary."
-
+    
 state_iso_rto = {
-    'AL': {'name': 'Alabama', 'iso_rto': 'Non-RTO/ISO_Region'},'},
+    'AL': {'name': 'Alabama', 'iso_rto': 'Non-RTO/ISO_Region'},
     'AK': {'name': 'Alaska', 'iso_rto': 'Non-RTO/ISO_Region'},
     'AZ': {'name': 'Arizona', 'iso_rto': 'Non-RTO/ISO_Region'},
     'AR': {'name': 'Arkansas', 'iso_rto': 'MISO'},
@@ -70,7 +84,7 @@ state_iso_rto = {
 
 # test the function with Texas
 if __name__ == "__main__":
-    state = "TX"
+    state = "AL"
     try:
         data = get_iso_rto(state)
         print(data)
