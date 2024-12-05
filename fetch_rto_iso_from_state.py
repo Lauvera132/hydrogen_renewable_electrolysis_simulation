@@ -68,3 +68,11 @@ state_iso_rto = {
     'DC': {'name': 'District of Columbia', 'iso_rto': 'PJM'}
 }
 
+# test the function with Texas
+if __name__ == "__main__":
+    state = "TX"
+    try:
+        data = get_iso_rto(state)
+        print(data)
+    except Exception as e:
+        print(f"An error occurred: {e}")
