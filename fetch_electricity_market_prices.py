@@ -2,17 +2,17 @@
 
 import pandas as pd
 
+# Dictionary to rename columns
+column_rename_dict = {
+    "Local Timestamp Eastern Time (Interval Ending)": "local_time_int_end",
+    "UTC Timestamp (Interval Ending)": "utc_time_int_end",
+    "Local Date": "local_date",
+    "Hour Number": "hour_number",
+    "Internal Hub LMP": "average_hub_lmp[$/MWh]",
+}
 
 def get_iso_ne_rt_lmp(years):
     data_frames = []
-    column_rename_dict = {
-        "Local Timestamp Eastern Time (Interval Beginning)": "local_time_int_start",
-        "Local Timestamp Eastern Time (Interval Ending)": "local_time_int_end",
-        "UTC Timestamp (Interval Ending)": "utc_time_int_end",
-        "Local Date": "local_date",
-        "Hour Number": "hour_number",
-        "Internal Hub LMP": "hub_lmp[$/MWh]",
-    }
     
     for year in years:
         file_path = f"iso_ne_realtime_locational_marginal_prices/isone_lmp_rt_hr_hubs_{year}.csv"
@@ -25,6 +25,8 @@ def get_iso_ne_rt_lmp(years):
             index_col="Local Timestamp Eastern Time (Interval Beginning)",
         )
         df.rename(columns=column_rename_dict, inplace=True)
+        df.index.rename("local_time_int_start", inplace=True)
+        df = df[list(column_rename_dict.values())]
         data_frames.append(df)
     
     combined_df = pd.concat(data_frames)
@@ -39,7 +41,6 @@ def get_iso_ne_rt_lmp(years):
         print(f"Percentage of missing hourly data: {missing_percentage:.2f}%")
     
     return combined_df
-
 
 # test the function
 if __name__ == "__main__":
