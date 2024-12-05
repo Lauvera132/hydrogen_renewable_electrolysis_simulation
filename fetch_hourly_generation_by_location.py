@@ -109,7 +109,7 @@ def fetch_renewables_ninja_data(city, state, year):
     
     return df_combined
 
-def fetch_data_for_years(city, state, years):
+def fetch_rewewables_generation_data_for_years(city, state, years):
     data_frames = []
     for year in years:
         try:
@@ -131,7 +131,7 @@ if __name__ == "__main__":
     state = "TX"
     years = [2021, 2022]
     try:
-        data = fetch_data_for_years(city, state, years)
+        data = fetch_renewables_generation_data_for_years(city, state, years)
         print("Data:")
         print(data.head())
         print(data.tail())
