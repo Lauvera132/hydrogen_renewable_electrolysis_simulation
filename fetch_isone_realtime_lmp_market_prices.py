@@ -1,4 +1,5 @@
 # fetch wholesale electricity market prices (real-time LMP) for ISO-NE RTO/ISO region
+# https://www.eia.gov/electricity/wholesalemarkets/data.php?rto=isone
 
 import pandas as pd
 
