@@ -29,6 +29,10 @@ def get_spp_rt_lmp(years):
                 df.rename(columns=column_rename_dict, inplace=True)
                 df.index.rename("local_time_int_start", inplace=True)
                 df = df[list(column_rename_dict.values())]
+
+                # Add the new column for average LMP
+                df['spp_average_lmp[$/MWh]'] = (df['north_hub_lmp[$/MWh]'] + df['south_hub_lmp[$/MWh]']) / 2
+
                 yearly_data_frames.append(df)
             except FileNotFoundError:
                 print(f"File not found: {file_path}. Skipping this file.")

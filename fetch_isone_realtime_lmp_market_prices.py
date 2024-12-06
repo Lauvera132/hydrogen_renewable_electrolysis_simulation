@@ -8,7 +8,7 @@ column_rename_dict = {
     "UTC Timestamp (Interval Ending)": "utc_time_int_end",
     "Local Date": "local_date",
     "Hour Number": "hour_number",
-    "Internal Hub LMP": "average_hub_lmp[$/MWh]",
+    "Internal Hub LMP": "isone_average_lmp[$/MWh]",
 }
 
 def get_iso_ne_rt_lmp(years):
