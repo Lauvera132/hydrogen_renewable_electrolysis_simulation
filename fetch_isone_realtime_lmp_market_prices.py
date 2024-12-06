@@ -19,7 +19,6 @@ def get_iso_ne_rt_lmp(years):
         df = pd.read_csv(
             file_path,
             skiprows=3,
-            nrows=8760,
             usecols=range(9),
             parse_dates=["Local Timestamp Eastern Time (Interval Beginning)"],
             index_col="Local Timestamp Eastern Time (Interval Beginning)",

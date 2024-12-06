@@ -12,15 +12,15 @@ column_rename_dict = {
     "South Hub LMP": "south_hub_lmp[$/MWh]",
 }
 
+
 def get_spp_rt_lmp(years):
     data_frames = []
     for year in years:
-        for quarter in ['Q1', 'Q2', 'Q3', 'Q4']:
+        for quarter in ["Q1", "Q2", "Q3", "Q4"]:
             file_path = f"spp_realtime_locational_marginal_prices/spp_lmp_rt_5min_hubs_{year}{quarter}.csv"
             df = pd.read_csv(
                 file_path,
                 skiprows=3,
-                nrows=8760,
                 usecols=range(13),
                 parse_dates=["Local Timestamp Central Time (Interval Beginning)"],
                 index_col="Local Timestamp Central Time (Interval Beginning)",
@@ -29,19 +29,22 @@ def get_spp_rt_lmp(years):
             df.index.rename("local_time_int_start", inplace=True)
             df = df[list(column_rename_dict.values())]
             data_frames.append(df)
-    
+
     combined_df = pd.concat(data_frames)
-    
+
     # Check for missing hours
-    full_range = pd.date_range(start=combined_df.index.min(), end=combined_df.index.max(), freq='h')
+    full_range = pd.date_range(
+        start=combined_df.index.min(), end=combined_df.index.max(), freq="h"
+    )
     missing_hours = full_range.difference(combined_df.index)
-    
+
     if not missing_hours.empty:
         total_hours = len(full_range)
         missing_percentage = (len(missing_hours) / total_hours) * 100
         print(f"Percentage of missing hourly data: {missing_percentage:.2f}%")
-    
+
     return combined_df
+
 
 # test the function
 if __name__ == "__main__":
