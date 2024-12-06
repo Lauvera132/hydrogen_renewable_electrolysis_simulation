@@ -33,7 +33,11 @@ def get_spp_rt_lmp(years):
                 # Add the new column for average LMP
                 df['spp_average_lmp[$/MWh]'] = (df['north_hub_lmp[$/MWh]'] + df['south_hub_lmp[$/MWh]']) / 2
 
-                yearly_data_frames.append(df)
+                # Select only numeric columns for resampling
+                numeric_cols = df.select_dtypes(include='number').columns
+                df_hourly = df[numeric_cols].resample('h').mean()
+
+                yearly_data_frames.append(df_hourly)
             except FileNotFoundError:
                 print(f"File not found: {file_path}. Skipping this file.")
         
