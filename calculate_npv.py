@@ -43,7 +43,7 @@ print(annual_water_consumed)
 
 # import electricity cost data
 from fetch_rto_iso_from_state import (get_iso_rto)
-from fetch_rto_iso_realtime_electricity_prices import (get_rto_iso_rt_prices)
+from fetch_rto_iso_realtime_electricity_prices import (get_realtime_electricity_prices)
 iso_rto = get_iso_rto(state)
 
 
