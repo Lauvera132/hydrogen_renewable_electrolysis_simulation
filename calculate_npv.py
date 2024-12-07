@@ -40,3 +40,11 @@ annual_water_consumed = data.groupby("year")["water_consumed[gallons]"].sum() * 
     1 - hydrogen_production_loss)
 print(annual_hydrogen_produced)
 print(annual_water_consumed)
+
+# import electricity cost data
+from fetch_rto_iso_from_state import (get_iso_rto)
+from fetch_rto_iso_realtime_electricity_prices import (get_rto_iso_rt_prices)
+iso_rto = get_iso_rto(state)
+
+
+
