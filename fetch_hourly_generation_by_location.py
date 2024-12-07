@@ -109,8 +109,14 @@ def fetch_renewables_ninja_data(city, state, year):
     tf = TimezoneFinder() # Create a TimezoneFinder object
     local_tz = pytz.timezone(tf.timezone_at(lat=latitude, lng=longitude)) # Get the local timezone using coordinates
     df_combined['time'] = pd.to_datetime(df_combined['time']) # Convert time to datetime
+
+    # Calculate total generation and capacity factors
     df_combined['time'] = df_combined['time'].apply(lambda x: x.tz_localize(pytz.utc).astimezone(local_tz).replace(tzinfo=None)) # Convert time to local timezone
-    
+    df_combined['total_electricity_gen[kw]'] = df_combined['electricity_solar_pv[kw]'] + df_combined['electricity_wind[kw]']
+    df_combined["capacity_factor_wind"] = df_combined["electricity_wind[kw]"] / (wind_capacity)
+    df_combined["capacity_factor_solar_pv"] = df_combined["electricity_solar_pv[kw]"] / (solar_pv_capacity)
+    df_combined["capacity_factor_combined"] = df_combined["total_electricity_gen[kw]"] / (wind_capacity + solar_pv_capacity)
+
     return df_combined
 
 def fetch_renewables_generation_data_for_years(city, state, years):
@@ -127,7 +133,7 @@ def fetch_renewables_generation_data_for_years(city, state, years):
     
     # Combine all yearly data into a single DataFrame
     final_df = pd.concat(data_frames, ignore_index=True)
-    return final_df
+    return final_df, wind_capacity, solar_pv_capacity
 
 # test the function with Austin, TX
 if __name__ == "__main__":
@@ -135,9 +141,11 @@ if __name__ == "__main__":
     state = "TX"
     years = [2021, 2022]
     try:
-        data = fetch_renewables_generation_data_for_years(city, state, years)
+        data, wind_capacity, solar_pv_capacity = fetch_renewables_generation_data_for_years(city, state, years)
         print("Data:")
         print(data.head())
         print(data.tail())
+        print(f"Wind Capacity: {wind_capacity} kW")
+        print(f"Solar PV Capacity: {solar_pv_capacity} kW")
     except Exception as e:
         print(f"An error occurred: {e}")
