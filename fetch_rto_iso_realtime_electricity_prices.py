@@ -25,7 +25,7 @@ def get_rto_iso_rt_lmp(rto_iso, years):
 
 # Example usage
 if __name__ == "__main__":
-    rto_iso = 'ercot'
+    rto_iso = 'ERCOT'
     years = [2021, 2022]
     prices = get_rto_iso_rt_lmp(rto_iso, years)
     print(prices.head())

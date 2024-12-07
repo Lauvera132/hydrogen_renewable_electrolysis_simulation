@@ -1,7 +1,5 @@
 # fetch hourly wind and solar generation by location using Renewables Ninja API
 # assumes data fetch for multiple years with a separate API request for each year
-# assumes 1000 kw solar, no tracking, 0.1 system loss, tilt angle = latitude (degree);
-# assumes 1500 kw wind capacity, GE 1.5sl turbine model, at 100 m hub height
 
 import requests
 import json
@@ -11,6 +9,15 @@ import time
 from datetime import datetime
 import pytz
 from timezonefinder import TimezoneFinder
+
+# assumptions for wind and solar PV systems
+wind_capacity = 7500  # in kW
+wind_hub_height = 100  # in meters
+wind_turbine_model = 'GE 1.5sl'
+solar_pv_capacity = 5000  # in kW
+solar_system_loss = 0.1
+solar_tracking = 0
+solar_azimuth_angle = 180  # in degrees (due south for the northern hemisphere)
 
 def get_coordinates_from_city_state(city, state):
     geocoding_url = "http://api.positionstack.com/v1/forward"
@@ -45,11 +52,11 @@ def fetch_renewables_ninja_data(city, state, year):
         'date_from': f'{year}-01-01',
         'date_to': f'{year}-12-31',
         'dataset': 'merra2',
-        'capacity': 1000,
-        'system_loss': 0.1,
-        'tracking': 0,
-        'tilt': latitude,
-        'azim': 180,
+        'capacity': solar_pv_capacity,
+        'system_loss': solar_system_loss,
+        'tracking': solar_tracking,
+        'tilt': latitude, # tilt angle = latitude (degree)
+        'azim': solar_azimuth_angle, 
         'format': 'json'
     }
     response_pv = s.get(url_pv, params=args_pv)
@@ -75,9 +82,9 @@ def fetch_renewables_ninja_data(city, state, year):
         'date_from': f'{year}-01-01',
         'date_to': f'{year}-12-31',
         'dataset': 'merra2',
-        'capacity': 1500,
-        'height': 100,
-        'turbine': 'GE 1.5sl',
+        'capacity': wind_capacity,
+        'height': wind_hub_height,
+        'turbine': wind_turbine_model,
         'format': 'json'
     }
     response_wind = s.get(url_wind, params=args_wind)
