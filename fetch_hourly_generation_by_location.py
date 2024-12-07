@@ -96,7 +96,7 @@ def fetch_renewables_ninja_data(city, state, year):
         raise Exception("Error decoding JSON response for wind data")
     
     # Combine solar PV and wind data
-    df_combined = pd.merge(data_pv, data_wind, on='time', suffixes=('_pv', '_wind'))
+    df_combined = pd.merge(data_pv, data_wind, on='time', suffixes=('_solar_pv', '_wind'))
     
     # Convert UTC time to local time
     tf = TimezoneFinder() # Create a TimezoneFinder object
@@ -106,7 +106,7 @@ def fetch_renewables_ninja_data(city, state, year):
     
     return df_combined
 
-def fetch_rewewables_generation_data_for_years(city, state, years):
+def fetch_renewables_generation_data_for_years(city, state, years):
     data_frames = []
     for year in years:
         try:
