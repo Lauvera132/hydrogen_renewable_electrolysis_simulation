@@ -169,13 +169,15 @@ print(annual_electrolyzer_plant_yearly_opex)
 
 # Calculate annual cash flows
 annual_cash_flows = []
+annual_cash_flows = [-electrolyzer_plant_size_kw * electrolyzer_plant_capex_per_kw]  # Initial CAPEX in year 0
 for year in range(1, project_lifetime + 1):
     if year <= len(years):
+        year_index = year - 1
         annual_hydrogen_ptc_credit = (
-            annual_hydrogen_produced * hydrogen_ptc_credit_per_kg
+            annual_hydrogen_produced.iloc[year_index] * hydrogen_ptc_credit_per_kg
         ).round(2)
-        annual_revenue = annual_hydrogen_sales_revenue + annual_hydrogen_ptc_credit - annual_income_tax
-        annual_costs = annual_electrolyzer_plant_yearly_opex + annual_cost_of_electricity + annual_cost_of_water 
+        annual_revenue = annual_hydrogen_sales_revenue.iloc[year_index] + annual_hydrogen_ptc_credit - annual_income_tax.iloc[year_index]
+        annual_costs = annual_electrolyzer_plant_yearly_opex.iloc[year_index] + annual_cost_of_electricity.iloc[year_index] + annual_cost_of_water.iloc[year_index]
     else:
         annual_revenue = annual_hydrogen_sales_revenue.mean() + (annual_hydrogen_produced.mean() * hydrogen_ptc_credit_per_kg) - annual_income_tax.mean()
         annual_costs = annual_electrolyzer_plant_yearly_opex.mean() + annual_cost_of_electricity.mean() + annual_cost_of_water.mean()
