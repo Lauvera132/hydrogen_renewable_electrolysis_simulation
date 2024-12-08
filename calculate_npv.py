@@ -152,7 +152,7 @@ electrolyzer_plant_fixed_yearly_opex_per_kw = 100  # $100 per kW
 electrolyzer_plant_variable_yearly_opex_per_kg_hydrogen = 0.01  # $0.01 per kg of hydrogen
 
 # calculate yearly revenue and costs
-annual_hydrogen_revenue = (
+annual_hydrogen_sales_revenue = (
     annual_hydrogen_produced * hydrogen_sale_price_per_kg
 ).round(2)
 annual_hydrogen_ptc_credit = (
