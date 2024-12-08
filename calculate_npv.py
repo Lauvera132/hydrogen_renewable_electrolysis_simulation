@@ -24,14 +24,18 @@ data, wind_gen_capacity, solar_pv_gen_capacity = (
     fetch_renewables_generation_data_for_years(city, state, years)
 )
 
-# Add a 'year' column to the data
-data["year"] = pd.to_datetime(data["time"]).dt.year
-
 # Make the 'time' column the index
 data.set_index("time", inplace=True)
 
+# Add a 'year' column to the data
+data["year"] = data.index.year
+
 # Calculate yearly capacity factor for wind and solar
 days_per_year = data.groupby("year").size() / 24
+
+# Remove any years from data that have less than 310 days
+valid_years = days_per_year[days_per_year >= 310].index
+data = data[data["year"].isin(valid_years)]
 
 yearly_capacity_factor_wind = data.groupby("year")["electricity_wind[kw]"].sum() / (
     wind_gen_capacity * days_per_year * 24
@@ -53,11 +57,11 @@ print(yearly_capacity_factor_combined)
 
 # calculate amount of hydrogen produced by electrolysis
 hydrogen_production_loss = 0.1  # 10% annual production loss
-data["hydrogen_produced[kg]"] = (
+data.loc[:, "hydrogen_produced[kg]"] = (
     (data["total_electricity_gen[kw]"] * 1 / electricity_input_per_kg_hydrogen)
     * (1 - hydrogen_production_loss)
 ).round(1)
-data["water_consumed[gallons]"] = (
+data.loc[:, "water_consumed[gallons]"] = (
     data["hydrogen_produced[kg]"] * water_input_per_kg_hydrogen
 ).round(1)
 
@@ -69,10 +73,10 @@ daily_average_hydrogen_produced = (
 annual_hydrogen_produced_average = annual_hydrogen_produced.mean().round(1)
 
 annual_water_consumed = data.groupby("year")["water_consumed[gallons]"].sum().round(1)
+annual_water_consumed_average = annual_water_consumed.mean().round(1)
+
 print("Annual Hydrogen Production [kg}:")
 print(annual_hydrogen_produced)
-print("Average Hydrogen Production [kg]:")
-print(daily_average_hydrogen_produced)
 print("Water Consumed [gallons]:")
 print(annual_water_consumed)
 
@@ -110,40 +114,28 @@ merged_data["cost_of_water[$]"] = (
 annual_cost_of_electricity = (
     merged_data.groupby("year")["cost_of_electricity[$]"].sum().round(2)
 )
+
 annual_cost_of_water = merged_data.groupby("year")["cost_of_water[$]"].sum().round(2)
 
-print("Cost of Electricity [$]:")
+print("Annual Cost of Electricity [$]:")
 print(annual_cost_of_electricity)
-print("Cost of Water [$]:")
+print("Annual Cost of Water [$]:")
 print(annual_cost_of_water)
 
 # Net Present Value (NPV) Assumptions
 
-# # wind plant assumptions
-# wind_capex_per_kw = 1500  # $1500 per kW
-# wind_itc_credit = 0.3  # 30% investment tax credit
-# wind_fixed_yearly_opex_per_kw = 50  # $50 per kW
-# wind_variable_yearly_opex_per_kwh = 0.01  # $0.01 per kWh
-
-# # solar PV plant assumptions
-# solar_pv_capex_per_kw = 2000  # $2000 per kW
-# solar_pv_itc_credit = 0.26  # 26% investment tax credit
-# solar_pv_fixed_yearly_opex_per_kw = 100  # $100 per kW
-# solar_pv_variable_yearly_opex_per_kwh = 0.02  # $0.02 per kWh
-
 # financial assumptions
 project_lifetime = 20  # 20 year project lifetime
 discount_rate = 0.1  # 10% discount rate
-total_income_tax_rate = 0.25  # 25% total income tax rate
+total_income_tax_rate = 0.21  # 25% total income tax rate
 project_start_year = 2020
 
 # electrolyzer system plant assumptions
 hydrogen_energy_density = 33.33  # 33.33 kWh/kg
-
 electrolyzer_efficiency = hydrogen_energy_density / electricity_input_per_kg_hydrogen
-
 electrolyzer_plant_size_kw = round(
     (wind_gen_capacity + solar_pv_gen_capacity) * yearly_capacity_factor_combined.mean() * electrolyzer_efficiency)
+print(f"Electrolyzer Plant Size [kW]: {electrolyzer_plant_size_kw}")
 
 # Calculate the number of hours where hydrogen is produced for each year
 hours_hydrogen_production = (data[data["hydrogen_produced[kg]"] > 0].groupby("year").size()) * (1 - hydrogen_production_loss)
@@ -162,25 +154,32 @@ electrolyzer_plant_variable_yearly_opex_per_kg_hydrogen = 0.01  # $0.01 per kg o
 annual_hydrogen_sales_revenue = (
     annual_hydrogen_produced * hydrogen_sale_price_per_kg
 ).round(2)
+print("Annual Hydrogen Sales Revenue [$]:")
+print(annual_hydrogen_sales_revenue)
 
 annual_income_tax = total_income_tax_rate * annual_hydrogen_sales_revenue
+print("Annual Income Tax [$]:")
+print(annual_income_tax)
 
 annual_electrolyzer_plant_yearly_opex = ((
     electrolyzer_plant_size_kw * electrolyzer_plant_fixed_yearly_opex_per_kw
 ) + (annual_hydrogen_produced * electrolyzer_plant_variable_yearly_opex_per_kg_hydrogen)).round(2)
+print("Annual Electrolyzer Plant Yearly OPEX [$]:")
+print(annual_electrolyzer_plant_yearly_opex)
 
 # Calculate annual cash flows
 annual_cash_flows = []
 for year in range(1, project_lifetime + 1):
-    if year <= 10:
+    if year <= len(years):
         annual_hydrogen_ptc_credit = (
             annual_hydrogen_produced * hydrogen_ptc_credit_per_kg
         ).round(2)
+        annual_revenue = annual_hydrogen_sales_revenue + annual_hydrogen_ptc_credit - annual_income_tax
+        annual_costs = annual_electrolyzer_plant_yearly_opex + annual_cost_of_electricity + annual_cost_of_water 
     else:
-        annual_hydrogen_ptc_credit = 0
-
-    annual_revenue = annual_hydrogen_sales_revenue + annual_hydrogen_ptc_credit - annual_income_tax
-    annual_costs = annual_electrolyzer_plant_yearly_opex + annual_cost_of_electricity + annual_cost_of_water 
+        annual_revenue = annual_hydrogen_sales_revenue.mean() + (annual_hydrogen_produced.mean() * hydrogen_ptc_credit_per_kg) - annual_income_tax.mean()
+        annual_costs = annual_electrolyzer_plant_yearly_opex.mean() + annual_cost_of_electricity.mean() + annual_cost_of_water.mean()
+    
     annual_cash_flow = annual_revenue - annual_costs
     annual_cash_flows.append(annual_cash_flow)
 
