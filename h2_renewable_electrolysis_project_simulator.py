@@ -20,6 +20,8 @@ city = input("Please enter the US city name: ")
 state = input("Please enter the US state abbreviation: ")
 # state = "TX"
 years = [2021, 2022, 2023] # years of available historical data; this can be adjusted when more data is available
+print("Historical Data Available for Years: ", years)
+print("Processing expected to take 30 sec...")
 
 # determine electricity available from wind/solar hourly generation for user location
 data, wind_gen_capacity, solar_pv_gen_capacity = (
@@ -54,8 +56,9 @@ yearly_capacity_factor_solar_pv = data.groupby("year")[
 yearly_capacity_factor_combined = data.groupby("year")[
     "total_electricity_gen[kw]"
 ].sum() / ((wind_gen_capacity + solar_pv_gen_capacity) * days_per_year * 24)
-print("Yearly Historical Combined Capacity Factor for Wind/Solar:")
-print(yearly_capacity_factor_combined)
+average_yearly_capacity_factor_combined = yearly_capacity_factor_combined.mean() * 100
+print(f"Average Yearly Combined Capacity Factor for Wind/Solar: {average_yearly_capacity_factor_combined:.2f}%")
+# print(yearly_capacity_factor_combined)
 
 # calculate amount of hydrogen produced by electrolysis
 hydrogen_production_loss = 0.1  # 10% annual production losscle
@@ -162,10 +165,10 @@ except ValueError:
 hydrogen_ptc_credit_per_kg = 3  # $3 per kg of hydrogen
 
 # electrolyzer plant costs
-electrolyzer_plant_capex_per_kw = 1000  # $1000 per kW
-electrolyzer_plant_fixed_yearly_opex_per_kw = 100  # $100 per kW
+electrolyzer_plant_capex_per_kw = 2000  # $2000 per kW
+electrolyzer_plant_fixed_yearly_opex_per_kw = 150  # $150 per kW
 electrolyzer_plant_variable_yearly_opex_per_kg_hydrogen = (
-    0.01  # $0.01 per kg of hydrogen
+    0.05  # $0.05 per kg of hydrogen
 )
 
 # calculate yearly revenue and costs
@@ -275,7 +278,7 @@ npv_hydrogen_produced = sum(
 )
 
 lcoh = npv_costs / npv_hydrogen_produced
-print(f"Levelized Cost of Hydrogen (LCOH): ${lcoh:,.2f} per kg of hydrogen")
+print(f"Levelized Cost of Hydrogen (LCOH) w/ 10-year 45V PTC): ${lcoh:,.2f} per kg of hydrogen")
 
 # Plot annual cash flows vs project lifetime as bars
 plt.figure(figsize=(12, 8))
