@@ -147,7 +147,7 @@ electrolyzer_plant_size_kw = round(
     * yearly_capacity_factor_combined.mean()
     * electrolyzer_efficiency
 )
-print(f"Electrolyzer Plant Size [kW]: {electrolyzer_plant_size_kw}")
+print(f"Electrolyzer Plant Size [kW] Based on : {electrolyzer_plant_size_kw}")
 
 # Calculate the number of hours where hydrogen is produced for each year
 hours_hydrogen_production = (
@@ -166,7 +166,7 @@ hydrogen_ptc_credit_per_kg = 3  # $3 per kg of hydrogen
 
 # electrolyzer plant costs
 electrolyzer_plant_capex_per_kw = 2000  # $2000 per kW
-electrolyzer_plant_fixed_yearly_opex_per_kw = 150  # $150 per kW
+electrolyzer_plant_fixed_yearly_opex_per_kw = 200  # 200 per kW
 electrolyzer_plant_variable_yearly_opex_per_kg_hydrogen = (
     0.05  # $0.05 per kg of hydrogen
 )
