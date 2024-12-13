@@ -142,7 +142,7 @@ hours_hydrogen_production = (data[data["hydrogen_produced[kg]"] > 0].groupby("ye
 electrolyzer_plant_utilization = hours_hydrogen_production / (days_per_year * 24)
 
 # yearly electrolyzer plant revenue assumptions
-hydrogen_sale_price_per_kg = 5  # $5 per kg of hydrogen
+hydrogen_sale_price_per_kg = 7  # price per kg of hydrogen
 hydrogen_ptc_credit_per_kg = 3  # $3 per kg of hydrogen
 
 # electrolyzer plant costs
@@ -173,19 +173,56 @@ annual_cash_flows = [-electrolyzer_plant_size_kw * electrolyzer_plant_capex_per_
 for year in range(1, project_lifetime + 1):
     if year <= len(years):
         year_index = year - 1
-        annual_hydrogen_ptc_credit = (
-            annual_hydrogen_produced.iloc[year_index] * hydrogen_ptc_credit_per_kg
-        ).round(2)
+        if year <= 10:
+            annual_hydrogen_ptc_credit = (
+                annual_hydrogen_produced.iloc[year_index] * hydrogen_ptc_credit_per_kg
+            ).round(2)
+        else:
+            annual_hydrogen_ptc_credit = 0
         annual_revenue = annual_hydrogen_sales_revenue.iloc[year_index] + annual_hydrogen_ptc_credit - annual_income_tax.iloc[year_index]
         annual_costs = annual_electrolyzer_plant_yearly_opex.iloc[year_index] + annual_cost_of_electricity.iloc[year_index] + annual_cost_of_water.iloc[year_index]
     else:
-        annual_revenue = annual_hydrogen_sales_revenue.mean() + (annual_hydrogen_produced.mean() * hydrogen_ptc_credit_per_kg) - annual_income_tax.mean()
+        if year <= 10:
+            annual_hydrogen_ptc_credit = (annual_hydrogen_produced.mean() * hydrogen_ptc_credit_per_kg).round(2)
+        else:
+            annual_hydrogen_ptc_credit = 0
+        annual_revenue = annual_hydrogen_sales_revenue.mean() + annual_hydrogen_ptc_credit - annual_income_tax.mean()
         annual_costs = annual_electrolyzer_plant_yearly_opex.mean() + annual_cost_of_electricity.mean() + annual_cost_of_water.mean()
     
     annual_cash_flow = annual_revenue - annual_costs
     annual_cash_flows.append(annual_cash_flow)
 
-# Calculate NPV
-npv = sum([cf / (1 + discount_rate) ** year for year, cf in enumerate(annual_cash_flows, start=1)])
+    # Convert annual cash flows to millions of dollars
+    annual_cash_flows_millions = [cf / 1e6 for cf in annual_cash_flows]
 
-print(f"Net Present Value (NPV): ${npv:.2f}")
+    # Plot annual cash flows vs project lifetime as bars
+    plt.figure(figsize=(10, 6))
+    colors = ['g' if cf >= 0 else 'darkred' for cf in annual_cash_flows_millions]
+    bars = plt.bar(range(project_lifetime + 1), annual_cash_flows_millions, color=colors)  # Change bar color based on value
+    plt.axhline(0, color='w', linestyle='--')  # Add a dashed horizontal line at $0
+    plt.title(f'Hydrogen Renewable Electrolysis Project Net Annual Cash Flow for {city}, {state}', color='w')
+    plt.xlabel('Year', color='w')
+    plt.ylabel('Annual Cash Flow [Millions of $]', color='w')
+    plt.xticks(range(project_lifetime + 1), color='w')  # Ensure x-axis uses whole numbers
+    plt.yticks(color='w')
+    plt.gca().set_facecolor('k')  # Set plot background to black
+    plt.gcf().set_facecolor('k')  # Set figure background to black
+    plt.gca().spines['top'].set_color('w')  # Set top border color to white
+    plt.gca().spines['right'].set_color('w')  # Set right border color to white
+    plt.gca().spines['bottom'].set_color('w')  # Set bottom border color to white
+    plt.gca().spines['left'].set_color('w')  # Set left border color to white
+
+    # Add values above each bar
+    for bar in bars:
+        height = bar.get_height()
+        plt.text(bar.get_x() + bar.get_width() / 2, height, f'{height:.1f}', ha='center', va='bottom', color='w')
+
+    plt.show()
+
+    # Save the plot as a .png file
+    plt.savefig(f'Hydrogen_Renewable_Electrolysis_Project_Cash_Flows_for_{city}_{state}.png', format='png', dpi=300, bbox_inches='tight')
+
+    # Calculate NPV
+    npv = sum([cf / (1 + discount_rate) ** year for year, cf in enumerate(annual_cash_flows, start=1)])
+
+    print(f"Project Net Present Value (NPV): ${npv:,.0f}")

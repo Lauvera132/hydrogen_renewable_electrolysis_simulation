@@ -22,7 +22,7 @@ solar_azimuth_angle = 180  # in degrees (due south for the northern hemisphere)
 def get_coordinates_from_city_state(city, state):
     geocoding_url = "http://api.positionstack.com/v1/forward"
     params = {
-        'access_key': '1db5a937b624043d89aecd08a833abee',
+        'access_key': '13724b6dbaad32abb6493e3bf1dcdabc',
         'query': f"{city}, {state}",
         'limit': 1
     }
