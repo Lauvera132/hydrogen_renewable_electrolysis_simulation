@@ -15,7 +15,7 @@ def get_iso_rto(state_abbr):
         iso_rto = state_iso_rto[state_abbr]["iso_rto"]
         if iso_rto == "Non-RTO/ISO_Region":
             print(
-                "You are in a non-RTO/ISO region. Please select which RTO/ISO regional market you'd like to simulate."
+                "You are in a non-RTO/ISO region. Please select which RTO/ISO regional wholesale electricity market you'd like to simulate."
             )
             available_regions = [
                 "CAISO",
