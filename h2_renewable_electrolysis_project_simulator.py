@@ -19,7 +19,11 @@ city = input("Please enter the US city name: ")
 # city = "Houston"
 state = input("Please enter the US state abbreviation: ")
 # state = "TX"
-years = [2021, 2022, 2023] # years of available historical data; this can be adjusted when more data is available
+years = [
+    2021,
+    2022,
+    2023,
+]  # years of available historical data; this can be adjusted when more data is available
 print("Historical Data Available for Years: ", years)
 print("Processing expected to take 30 sec...")
 
@@ -57,7 +61,9 @@ yearly_capacity_factor_combined = data.groupby("year")[
     "total_electricity_gen[kw]"
 ].sum() / ((wind_gen_capacity + solar_pv_gen_capacity) * days_per_year * 24)
 average_yearly_capacity_factor_combined = yearly_capacity_factor_combined.mean() * 100
-print(f"Average Yearly Combined Capacity Factor for Wind/Solar: {average_yearly_capacity_factor_combined:.2f}%")
+print(
+    f"Average Yearly Combined Capacity Factor for Wind/Solar: {average_yearly_capacity_factor_combined:.2f}%"
+)
 # print(yearly_capacity_factor_combined)
 
 # calculate amount of hydrogen produced by electrolysis
@@ -142,12 +148,35 @@ project_start_year = 2020
 # electrolyzer system plant assumptions
 hydrogen_energy_density = 33.33  # 33.33 kWh/kg
 electrolyzer_efficiency = hydrogen_energy_density / electricity_input_per_kg_hydrogen
-electrolyzer_plant_size_kw = round(
+# Calculate the default electrolyzer plant size
+default_electrolyzer_plant_size_kw = round(
     (wind_gen_capacity + solar_pv_gen_capacity)
     * yearly_capacity_factor_combined.mean()
     * electrolyzer_efficiency
 )
-print(f"Electrolyzer Plant Size [kW] Based on : {electrolyzer_plant_size_kw}")
+print(f"Default Electrolyzer Plant Size [kW]: {default_electrolyzer_plant_size_kw}")
+
+# Prompt user to enter their own electrolyzer plant size or use the default
+user_input = input(
+    f"Enter the electrolyzer plant size in kW (or press Enter to use the default size of {default_electrolyzer_plant_size_kw} kW): "
+)
+
+try:
+    if user_input:
+        electrolyzer_plant_size_kw = int(user_input)
+        if electrolyzer_plant_size_kw > (wind_gen_capacity + solar_pv_gen_capacity):
+            raise ValueError(
+                "Electrolyzer plant size cannot exceed the total wind + solar PV generation capacity."
+            )
+    else:
+        electrolyzer_plant_size_kw = default_electrolyzer_plant_size_kw
+except ValueError as e:
+    print(
+        f"Invalid input: {e}. Using default size of {default_electrolyzer_plant_size_kw} kW."
+    )
+    electrolyzer_plant_size_kw = default_electrolyzer_plant_size_kw
+
+print(f"Electrolyzer Plant Size [kW]: {electrolyzer_plant_size_kw}")
 
 # Calculate the number of hours where hydrogen is produced for each year
 hours_hydrogen_production = (
@@ -157,7 +186,9 @@ electrolyzer_plant_utilization = hours_hydrogen_production / (days_per_year * 24
 
 # yearly electrolyzer plant revenue assumptions
 try:
-    hydrogen_sale_price_per_kg = float(input("Please enter expected hydrogen sales price [$/kg_H2]: "))
+    hydrogen_sale_price_per_kg = float(
+        input("Please enter expected hydrogen sales price [$/kg_H2]: ")
+    )
     hydrogen_sale_price_per_kg = int(hydrogen_sale_price_per_kg)
 except ValueError:
     print("Invalid input. Using default value of 7 $/kg_h2.")
@@ -264,10 +295,7 @@ print(f"Project Net Present Value (NPV): ${npv:,.0f}")
 
 # Calculate Levelized Cost of Hydrogen (LCOH)
 npv_costs = sum(
-    [
-        cf / (1 + discount_rate) ** year
-        for year, cf in enumerate(annual_costs, start=1)
-    ]
+    [cf / (1 + discount_rate) ** year for year, cf in enumerate(annual_costs, start=1)]
 )
 
 npv_hydrogen_produced = sum(
@@ -278,25 +306,25 @@ npv_hydrogen_produced = sum(
 )
 
 lcoh = npv_costs / npv_hydrogen_produced
-print(f"Levelized Cost of Hydrogen (LCOH) w/ 10-year 45V PTC): ${lcoh:,.2f} per kg of hydrogen")
+print(
+    f"Levelized Cost of Hydrogen (LCOH) w/ 10-year 45V PTC): ${lcoh:,.2f} per kg of hydrogen"
+)
 
 # Plot annual cash flows vs project lifetime as bars
 plt.figure(figsize=(12, 8))
 
 # Change bar color based on value
 colors = ["g" if cf >= 0 else "darkred" for cf in annual_cash_flows_millions]
-bars = plt.bar(
-    range(project_lifetime + 1), annual_cash_flows_millions, color=colors
-    )
+bars = plt.bar(range(project_lifetime + 1), annual_cash_flows_millions, color=colors)
 
 # Add a dashed horizontal line at $0
 plt.axhline(0, color="w", linestyle="--")
 
 # Set plot title and labels
 plt.title(
-        f"Hydrogen Renewable Electrolysis {electrolyzer_plant_size_kw} kW Project Annual Cash Flow for {city}, {state}",
-        color="w",
-    )
+    f"Hydrogen Renewable Electrolysis {electrolyzer_plant_size_kw} kW Project Annual Cash Flow for {city}, {state}",
+    color="w",
+)
 plt.xlabel("Year", color="w")
 plt.ylabel("Annual Cash Flow [Millions of $]", color="w")
 
@@ -314,7 +342,7 @@ plt.gca().spines["right"].set_color("w")
 plt.gca().spines["bottom"].set_color("w")
 plt.gca().spines["left"].set_color("w")
 
- # Add values above each bar
+# Add values above each bar
 for bar in bars:
     height = bar.get_height()
     plt.text(
@@ -341,4 +369,3 @@ print(
 
 # Show the plot
 # plt.show()
-
