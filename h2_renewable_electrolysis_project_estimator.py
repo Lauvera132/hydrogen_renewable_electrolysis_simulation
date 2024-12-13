@@ -144,7 +144,7 @@ electrolyzer_plant_size_kw = round(
     * yearly_capacity_factor_combined.mean()
     * electrolyzer_efficiency
 )
-print(f"Simulated Electrolyzer Plant Size [kW]: {electrolyzer_plant_size_kw}")
+print(f"Electrolyzer Plant Size [kW]: {electrolyzer_plant_size_kw}")
 
 # Calculate the number of hours where hydrogen is produced for each year
 hours_hydrogen_production = (
@@ -153,8 +153,12 @@ hours_hydrogen_production = (
 electrolyzer_plant_utilization = hours_hydrogen_production / (days_per_year * 24)
 
 # yearly electrolyzer plant revenue assumptions
-hydrogen_sale_price_per_kg = input("Please expected hydrogen sales price [$/kg_H2]: ")
-# hydrogen_sale_price_per_kg = 7  # price per kg of hydrogen
+try:
+    hydrogen_sale_price_per_kg = float(input("Please enter expected hydrogen sales price [$/kg_H2]: "))
+    hydrogen_sale_price_per_kg = int(hydrogen_sale_price_per_kg)
+except ValueError:
+    print("Invalid input. Using default value of 7 $/kg_h2.")
+    hydrogen_sale_price_per_kg = 7.0  # default price per kg of hydrogen
 hydrogen_ptc_credit_per_kg = 3  # $3 per kg of hydrogen
 
 # electrolyzer plant costs
