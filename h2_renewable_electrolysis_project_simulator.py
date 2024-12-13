@@ -15,7 +15,7 @@ from fetch_hourly_generation_by_location import (
 )
 
 # Prompt user for input
-city = input("Please enter the US city: ")
+city = input("Please enter the US city name: ")
 # city = "Houston"
 state = input("Please enter the US state abbreviation: ")
 # state = "TX"
@@ -42,23 +42,23 @@ data = data[data["year"].isin(valid_years)]
 yearly_capacity_factor_wind = data.groupby("year")["electricity_wind[kw]"].sum() / (
     wind_gen_capacity * days_per_year * 24
 )
-print("Yearly Capacity Factor Wind:")
-print(yearly_capacity_factor_wind)
+# print("Yearly Capacity Factor Wind:")
+# print(yearly_capacity_factor_wind)
 
 yearly_capacity_factor_solar_pv = data.groupby("year")[
     "electricity_solar_pv[kw]"
 ].sum() / (solar_pv_gen_capacity * days_per_year * 24)
-print("Yearly Capacity Factor Solar PV:")
-print(yearly_capacity_factor_solar_pv)
+# print("Yearly Capacity Factor Solar PV:")
+# print(yearly_capacity_factor_solar_pv)
 
 yearly_capacity_factor_combined = data.groupby("year")[
     "total_electricity_gen[kw]"
 ].sum() / ((wind_gen_capacity + solar_pv_gen_capacity) * days_per_year * 24)
-print("Yearly Capacity Factor Combined:")
+print("Yearly Historical Combined Capacity Factor for Wind/Solar:")
 print(yearly_capacity_factor_combined)
 
 # calculate amount of hydrogen produced by electrolysis
-hydrogen_production_loss = 0.1  # 10% annual production loss
+hydrogen_production_loss = 0.1  # 10% annual production losscle
 data.loc[:, "hydrogen_produced[kg]"] = (
     (data["total_electricity_gen[kw]"] * 1 / electricity_input_per_kg_hydrogen)
     * (1 - hydrogen_production_loss)
@@ -333,9 +333,9 @@ plt.savefig(
 print(
     f"Project cash flows plot saved as Hydrogen_Renewable_Electrolysis_Project_Cash_Flows_for_{city}_{state}.png"
 )
+# Stop the program after saving plot
+# sys.exit()
 
 # Show the plot
-plt.show()
+# plt.show()
 
-# Stop the program after showing the plot
-sys.exit()
