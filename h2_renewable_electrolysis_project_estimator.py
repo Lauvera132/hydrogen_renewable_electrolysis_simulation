@@ -1,6 +1,8 @@
 # calculate the NPV of a hydrogen electrolysis project using wind/solar generation data
 
 # calculate amount of hydrogen produced by electrolysis
+# sourced from NREL H2A-Lite: Hydrogen Analysis Lite Production Model
+# https://www.nrel.gov/hydrogen/h2a-lite.html
 electricity_input_per_kg_hydrogen = 55.5  # kWh
 water_input_per_kg_hydrogen = 3.780  # gallons
 
@@ -17,7 +19,7 @@ from fetch_hourly_generation_by_location import (
 city = "Houston"
 # state = input("Please enter the US state abbreviation: ")
 state = "TX"
-years = [2021, 2022, 2023]
+years = [2021, 2022, 2023] # years of available historical data; this can be adjusted when more data is available
 
 # determine electricity available from wind/solar hourly generation for user location
 data, wind_gen_capacity, solar_pv_gen_capacity = (
@@ -75,10 +77,10 @@ annual_hydrogen_produced_average = annual_hydrogen_produced.mean().round(1)
 annual_water_consumed = data.groupby("year")["water_consumed[gallons]"].sum().round(1)
 annual_water_consumed_average = annual_water_consumed.mean().round(1)
 
-print("Annual Hydrogen Production [kg}:")
-print(annual_hydrogen_produced)
-print("Water Consumed [gallons]:")
-print(annual_water_consumed)
+# print("Annual Hydrogen Production [kg}:")
+# print(annual_hydrogen_produced)
+# print("Water Consumed [gallons]:")
+# print(annual_water_consumed)
 
 # import electricity cost data
 from fetch_rto_iso_from_state import get_iso_rto
@@ -102,7 +104,8 @@ else:
 
 # calculate cost of electricity and water used
 merged_data["cost_of_electricity[$]"] = (
-    merged_data["total_electricity_gen[kw]"] * 1
+    merged_data["total_electricity_gen[kw]"]
+    * 1
     * merged_data[f"{iso_rto.lower()}_average_lmp[$/MWh]"]
     / 1000
 ).round(2)
@@ -117,59 +120,79 @@ annual_cost_of_electricity = (
 
 annual_cost_of_water = merged_data.groupby("year")["cost_of_water[$]"].sum().round(2)
 
-print("Annual Cost of Electricity [$]:")
-print(annual_cost_of_electricity)
-print("Annual Cost of Water [$]:")
-print(annual_cost_of_water)
+# print("Annual Cost of Electricity [$]:")
+# print(annual_cost_of_electricity)
+# print("Annual Cost of Water [$]:")
+# print(annual_cost_of_water)
 
 # Net Present Value (NPV) Assumptions
 
 # financial assumptions
 project_lifetime = 20  # 20 year project lifetime
+print(f"Project Lifetime: {project_lifetime} years")
 discount_rate = 0.1  # 10% discount rate
+print(f"Discount Rate: {discount_rate * 100}%")
 total_income_tax_rate = 0.21  # 25% total income tax rate
+print(f"Total Income Tax Rate: {total_income_tax_rate * 100}%")
 project_start_year = 2020
 
 # electrolyzer system plant assumptions
 hydrogen_energy_density = 33.33  # 33.33 kWh/kg
 electrolyzer_efficiency = hydrogen_energy_density / electricity_input_per_kg_hydrogen
 electrolyzer_plant_size_kw = round(
-    (wind_gen_capacity + solar_pv_gen_capacity) * yearly_capacity_factor_combined.mean() * electrolyzer_efficiency)
-print(f"Electrolyzer Plant Size [kW]: {electrolyzer_plant_size_kw}")
+    (wind_gen_capacity + solar_pv_gen_capacity)
+    * yearly_capacity_factor_combined.mean()
+    * electrolyzer_efficiency
+)
+print(f"Simulated Electrolyzer Plant Size [kW]: {electrolyzer_plant_size_kw}")
 
 # Calculate the number of hours where hydrogen is produced for each year
-hours_hydrogen_production = (data[data["hydrogen_produced[kg]"] > 0].groupby("year").size()) * (1 - hydrogen_production_loss)
+hours_hydrogen_production = (
+    data[data["hydrogen_produced[kg]"] > 0].groupby("year").size()
+) * (1 - hydrogen_production_loss)
 electrolyzer_plant_utilization = hours_hydrogen_production / (days_per_year * 24)
 
 # yearly electrolyzer plant revenue assumptions
-hydrogen_sale_price_per_kg = 7  # price per kg of hydrogen
+hydrogen_sale_price_per_kg = input("Please expected hydrogen sales price [$/kg_H2]: ")
+# hydrogen_sale_price_per_kg = 7  # price per kg of hydrogen
 hydrogen_ptc_credit_per_kg = 3  # $3 per kg of hydrogen
 
 # electrolyzer plant costs
 electrolyzer_plant_capex_per_kw = 1000  # $1000 per kW
 electrolyzer_plant_fixed_yearly_opex_per_kw = 100  # $100 per kW
-electrolyzer_plant_variable_yearly_opex_per_kg_hydrogen = 0.01  # $0.01 per kg of hydrogen
+electrolyzer_plant_variable_yearly_opex_per_kg_hydrogen = (
+    0.01  # $0.01 per kg of hydrogen
+)
 
 # calculate yearly revenue and costs
 annual_hydrogen_sales_revenue = (
     annual_hydrogen_produced * hydrogen_sale_price_per_kg
 ).round(2)
-print("Annual Hydrogen Sales Revenue [$]:")
-print(annual_hydrogen_sales_revenue)
+# print("Annual Hydrogen Sales Revenue [$]:")
+# print(annual_hydrogen_sales_revenue)
 
 annual_income_tax = total_income_tax_rate * annual_hydrogen_sales_revenue
-print("Annual Income Tax [$]:")
-print(annual_income_tax)
+# print("Annual Income Tax [$]:")
+# print(annual_income_tax)
 
-annual_electrolyzer_plant_yearly_opex = ((
-    electrolyzer_plant_size_kw * electrolyzer_plant_fixed_yearly_opex_per_kw
-) + (annual_hydrogen_produced * electrolyzer_plant_variable_yearly_opex_per_kg_hydrogen)).round(2)
-print("Annual Electrolyzer Plant Yearly OPEX [$]:")
-print(annual_electrolyzer_plant_yearly_opex)
+annual_electrolyzer_plant_yearly_opex = (
+    (electrolyzer_plant_size_kw * electrolyzer_plant_fixed_yearly_opex_per_kw)
+    + (
+        annual_hydrogen_produced
+        * electrolyzer_plant_variable_yearly_opex_per_kg_hydrogen
+    )
+).round(2)
+# print("Annual Electrolyzer Plant Yearly OPEX [$]:")
+# print(annual_electrolyzer_plant_yearly_opex)
 
 # Calculate annual cash flows
-annual_cash_flows = []
-annual_cash_flows = [-electrolyzer_plant_size_kw * electrolyzer_plant_capex_per_kw]  # Initial CAPEX in year 0
+annual_cash_flows = []  # Initialize list to store annual cash flows
+annual_costs = [
+    electrolyzer_plant_size_kw * electrolyzer_plant_capex_per_kw
+]  # Initial CAPEX in year 0
+annual_revenues = [0]
+annual_hydrogen_production_kg = [0]
+
 for year in range(1, project_lifetime + 1):
     if year <= len(years):
         year_index = year - 1
@@ -179,50 +202,133 @@ for year in range(1, project_lifetime + 1):
             ).round(2)
         else:
             annual_hydrogen_ptc_credit = 0
-        annual_revenue = annual_hydrogen_sales_revenue.iloc[year_index] + annual_hydrogen_ptc_credit - annual_income_tax.iloc[year_index]
-        annual_costs = annual_electrolyzer_plant_yearly_opex.iloc[year_index] + annual_cost_of_electricity.iloc[year_index] + annual_cost_of_water.iloc[year_index]
+
+        annual_revenue = annual_hydrogen_sales_revenue.iloc[year_index]
+        annual_cost = (
+            annual_electrolyzer_plant_yearly_opex.iloc[year_index]
+            + annual_cost_of_electricity.iloc[year_index]
+            + annual_cost_of_water.iloc[year_index]
+            + annual_income_tax.iloc[year_index]
+            - annual_hydrogen_ptc_credit
+        )
+        annual_hydrogen_production = annual_hydrogen_produced.iloc[year_index]
     else:
         if year <= 10:
-            annual_hydrogen_ptc_credit = (annual_hydrogen_produced.mean() * hydrogen_ptc_credit_per_kg).round(2)
+            annual_hydrogen_ptc_credit = (
+                annual_hydrogen_produced.mean() * hydrogen_ptc_credit_per_kg
+            ).round(2)
         else:
             annual_hydrogen_ptc_credit = 0
-        annual_revenue = annual_hydrogen_sales_revenue.mean() + annual_hydrogen_ptc_credit - annual_income_tax.mean()
-        annual_costs = annual_electrolyzer_plant_yearly_opex.mean() + annual_cost_of_electricity.mean() + annual_cost_of_water.mean()
-    
-    annual_cash_flow = annual_revenue - annual_costs
-    annual_cash_flows.append(annual_cash_flow)
+        annual_revenue = annual_hydrogen_sales_revenue.mean()
+        annual_cost = (
+            annual_electrolyzer_plant_yearly_opex.mean()
+            + annual_cost_of_electricity.mean()
+            + annual_cost_of_water.mean()
+            + annual_income_tax.mean()
+            - annual_hydrogen_ptc_credit
+        )
+        annual_hydrogen_production = [annual_hydrogen_produced.mean()]
 
-    # Convert annual cash flows to millions of dollars
-    annual_cash_flows_millions = [cf / 1e6 for cf in annual_cash_flows]
+        annual_hydrogen_production = annual_hydrogen_produced.mean()
+    annual_revenues.append(annual_revenue)
+    annual_costs.append(annual_cost)
+    annual_hydrogen_production_kg.append(annual_hydrogen_production)
+    annual_cash_flows = [
+        annual_revenues[i] - annual_costs[i] for i in range(len(annual_revenues))
+    ]
 
-    # Plot annual cash flows vs project lifetime as bars
-    plt.figure(figsize=(10, 6))
-    colors = ['g' if cf >= 0 else 'darkred' for cf in annual_cash_flows_millions]
-    bars = plt.bar(range(project_lifetime + 1), annual_cash_flows_millions, color=colors)  # Change bar color based on value
-    plt.axhline(0, color='w', linestyle='--')  # Add a dashed horizontal line at $0
-    plt.title(f'Hydrogen Renewable Electrolysis Project Net Annual Cash Flow for {city}, {state}', color='w')
-    plt.xlabel('Year', color='w')
-    plt.ylabel('Annual Cash Flow [Millions of $]', color='w')
-    plt.xticks(range(project_lifetime + 1), color='w')  # Ensure x-axis uses whole numbers
-    plt.yticks(color='w')
-    plt.gca().set_facecolor('k')  # Set plot background to black
-    plt.gcf().set_facecolor('k')  # Set figure background to black
-    plt.gca().spines['top'].set_color('w')  # Set top border color to white
-    plt.gca().spines['right'].set_color('w')  # Set right border color to white
-    plt.gca().spines['bottom'].set_color('w')  # Set bottom border color to white
-    plt.gca().spines['left'].set_color('w')  # Set left border color to white
+# Convert annual cash flows to millions of dollars
+annual_cash_flows_millions = []
+annual_costs_millions = []
+annual_revenues_millions = []
+annual_cash_flows_millions = [cf / 1e6 for cf in annual_cash_flows]
+annual_costs_millions = [cf / 1e6 for cf in annual_costs]
+annual_revenues_millions = [cf / 1e6 for cf in annual_revenues]
 
-    # Add values above each bar
-    for bar in bars:
-        height = bar.get_height()
-        plt.text(bar.get_x() + bar.get_width() / 2, height, f'{height:.1f}', ha='center', va='bottom', color='w')
+# Plot annual cash flows vs project lifetime as bars
+plt.figure(figsize=(12, 8))
 
-    plt.show()
+# Change bar color based on value
+colors = ["g" if cf >= 0 else "darkred" for cf in annual_cash_flows_millions]
+bars = plt.bar(
+    range(project_lifetime + 1), annual_cash_flows_millions, color=colors
+    )
 
-    # Save the plot as a .png file
-    plt.savefig(f'Hydrogen_Renewable_Electrolysis_Project_Cash_Flows_for_{city}_{state}.png', format='png', dpi=300, bbox_inches='tight')
+# Add a dashed horizontal line at $0
+plt.axhline(0, color="w", linestyle="--")
 
-    # Calculate NPV
-    npv = sum([cf / (1 + discount_rate) ** year for year, cf in enumerate(annual_cash_flows, start=1)])
+# Set plot title and labels
+plt.title(
+        f"Hydrogen Renewable Electrolysis {electrolyzer_plant_size_kw} kW Project Annual Cash Flow for {city}, {state}",
+        color="w",
+    )
+plt.xlabel("Year", color="w")
+plt.ylabel("Annual Cash Flow [Millions of $]", color="w")
 
-    print(f"Project Net Present Value (NPV): ${npv:,.0f}")
+# Ensure x-axis uses whole numbers
+plt.xticks(range(project_lifetime + 1), color="w")
+plt.yticks(color="w")
+
+# Set plot and figure background to black
+plt.gca().set_facecolor("k")
+plt.gcf().set_facecolor("k")
+
+# Set border colors to white
+plt.gca().spines["top"].set_color("w")
+plt.gca().spines["right"].set_color("w")
+plt.gca().spines["bottom"].set_color("w")
+plt.gca().spines["left"].set_color("w")
+
+ # Add values above each bar
+for bar in bars:
+    height = bar.get_height()
+    plt.text(
+        bar.get_x() + bar.get_width() / 2,
+        height,
+        f"{height:.1f}",
+        ha="center",
+        va="bottom",
+        color="w",
+    )
+
+# Save the plot as a .png file
+plt.savefig(
+    f"Hydrogen_Renewable_Electrolysis_Project_Cash_Flows_for_{city}_{state}.png",
+    format="png",
+    dpi=300,
+    bbox_inches="tight",
+)
+print(
+    f"Project cash flows plot saved as Hydrogen_Renewable_Electrolysis_Project_Cash_Flows_for_{city}_{state}.png"
+)
+
+# Show the plot
+plt.show()
+
+# Calculate NPV
+npv = sum(
+    [
+        cf / (1 + discount_rate) ** year
+        for year, cf in enumerate(annual_cash_flows, start=1)
+    ]
+)
+
+print(f"Project Net Present Value (NPV): ${npv:,.0f}")
+
+# Calculate Levelized Cost of Hydrogen (LCOH)
+npv_costs = sum(
+    [
+        cf / (1 + discount_rate) ** year
+        for year, cf in enumerate(annual_costs, start=1)
+    ]
+)
+
+npv_hydrogen_produced = sum(
+    [
+        cf / (1 + discount_rate) ** year
+        for year, cf in enumerate(annual_hydrogen_production_kg, start=1)
+    ]
+)
+
+lcoh = npv_costs / npv_hydrogen_produced
+print(f"Levelized Cost of Hydrogen (LCOH): ${lcoh:,.2f} per kg")
