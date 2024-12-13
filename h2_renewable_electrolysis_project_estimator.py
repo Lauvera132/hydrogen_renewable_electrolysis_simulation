@@ -15,10 +15,10 @@ from fetch_hourly_generation_by_location import (
 )
 
 # Prompt user for input
-# city = input("Please enter the US city: ")
-city = "Houston"
-# state = input("Please enter the US state abbreviation: ")
-state = "TX"
+city = input("Please enter the US city: ")
+# city = "Houston"
+state = input("Please enter the US state abbreviation: ")
+# state = "TX"
 years = [2021, 2022, 2023] # years of available historical data; this can be adjusted when more data is available
 
 # determine electricity available from wind/solar hourly generation for user location
@@ -85,10 +85,10 @@ annual_water_consumed_average = annual_water_consumed.mean().round(1)
 # import electricity cost data
 from fetch_rto_iso_from_state import get_iso_rto
 from fetch_rto_iso_realtime_electricity_prices import get_rto_iso_rt_lmp
+import sys
 
 iso_rto = get_iso_rto(state)
-print("ISO/RTO:")
-print(iso_rto)
+print(f"ISO/RTO: {iso_rto}")
 price_data = get_rto_iso_rt_lmp(iso_rto, years)
 
 # merge the wind and solar generation with price data
@@ -249,6 +249,34 @@ annual_cash_flows_millions = [cf / 1e6 for cf in annual_cash_flows]
 annual_costs_millions = [cf / 1e6 for cf in annual_costs]
 annual_revenues_millions = [cf / 1e6 for cf in annual_revenues]
 
+# Calculate NPV
+npv = sum(
+    [
+        cf / (1 + discount_rate) ** year
+        for year, cf in enumerate(annual_cash_flows, start=1)
+    ]
+)
+
+print(f"Project Net Present Value (NPV): ${npv:,.0f}")
+
+# Calculate Levelized Cost of Hydrogen (LCOH)
+npv_costs = sum(
+    [
+        cf / (1 + discount_rate) ** year
+        for year, cf in enumerate(annual_costs, start=1)
+    ]
+)
+
+npv_hydrogen_produced = sum(
+    [
+        cf / (1 + discount_rate) ** year
+        for year, cf in enumerate(annual_hydrogen_production_kg, start=1)
+    ]
+)
+
+lcoh = npv_costs / npv_hydrogen_produced
+print(f"Levelized Cost of Hydrogen (LCOH): ${lcoh:,.2f} per kg of hydrogen")
+
 # Plot annual cash flows vs project lifetime as bars
 plt.figure(figsize=(12, 8))
 
@@ -309,30 +337,5 @@ print(
 # Show the plot
 plt.show()
 
-# Calculate NPV
-npv = sum(
-    [
-        cf / (1 + discount_rate) ** year
-        for year, cf in enumerate(annual_cash_flows, start=1)
-    ]
-)
-
-print(f"Project Net Present Value (NPV): ${npv:,.0f}")
-
-# Calculate Levelized Cost of Hydrogen (LCOH)
-npv_costs = sum(
-    [
-        cf / (1 + discount_rate) ** year
-        for year, cf in enumerate(annual_costs, start=1)
-    ]
-)
-
-npv_hydrogen_produced = sum(
-    [
-        cf / (1 + discount_rate) ** year
-        for year, cf in enumerate(annual_hydrogen_production_kg, start=1)
-    ]
-)
-
-lcoh = npv_costs / npv_hydrogen_produced
-print(f"Levelized Cost of Hydrogen (LCOH): ${lcoh:,.2f} per kg")
+# Stop the program after showing the plot
+sys.exit()
