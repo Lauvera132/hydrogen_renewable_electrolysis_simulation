@@ -136,7 +136,7 @@ annual_cost_of_water = merged_data.groupby("year")["cost_of_water[$]"].sum().rou
 
 # Net Present Value (NPV) Assumptions
 
-# financial assumptions
+# financial assumptions; same as NREL H2A-Lite model
 project_lifetime = 20  # 20 year project lifetime
 print(f"Project Lifetime: {project_lifetime} years")
 discount_rate = 0.1  # 10% discount rate
