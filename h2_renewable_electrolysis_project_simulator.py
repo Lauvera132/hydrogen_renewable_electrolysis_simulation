@@ -67,7 +67,7 @@ print(
 # print(yearly_capacity_factor_combined)
 
 # calculate amount of hydrogen produced by electrolysis
-hydrogen_production_loss = 0.1  # 10% annual production losscle
+hydrogen_production_loss = 0.1  # 10% annual production loss
 data.loc[:, "hydrogen_produced[kg]"] = (
     (data["total_electricity_gen[kw]"] * 1 / electricity_input_per_kg_hydrogen)
     * (1 - hydrogen_production_loss)
@@ -137,6 +137,7 @@ annual_cost_of_water = merged_data.groupby("year")["cost_of_water[$]"].sum().rou
 # Net Present Value (NPV) Assumptions
 
 # financial assumptions; same as NREL H2A-Lite model
+print("Financial Assumptions:")
 project_lifetime = 20  # 20 year project lifetime
 print(f"Project Lifetime: {project_lifetime} years")
 discount_rate = 0.1  # 10% discount rate
@@ -146,7 +147,7 @@ print(f"Total Income Tax Rate: {total_income_tax_rate * 100}%")
 project_start_year = 2020
 
 # electrolyzer system plant assumptions
-hydrogen_energy_density = 33.33  # 33.33 kWh/kg
+hydrogen_energy_density = 33.33  # 33.33 kWh/kg (Lower Heating Value of H2)
 electrolyzer_efficiency = hydrogen_energy_density / electricity_input_per_kg_hydrogen
 # Calculate the default electrolyzer plant size
 default_electrolyzer_plant_size_kw = round(
@@ -154,6 +155,8 @@ default_electrolyzer_plant_size_kw = round(
     * yearly_capacity_factor_combined.mean()
     * electrolyzer_efficiency
 )
+print(f"Assuming Wind Generation Capacity [kW]: {wind_gen_capacity}")
+print(f"Assuming Solar PV Generation Capacity [kW]: {solar_pv_gen_capacity}")
 print(f"Default Electrolyzer Plant Size [kW]: {default_electrolyzer_plant_size_kw}")
 
 # Prompt user to enter their own electrolyzer plant size or use the default
