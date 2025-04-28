@@ -155,8 +155,9 @@ default_electrolyzer_plant_size_kw = round(
     * yearly_capacity_factor_combined.mean()
     * electrolyzer_efficiency
 )
-print(f"Assuming Wind Generation Capacity [kW]: {wind_gen_capacity}")
-print(f"Assuming Solar PV Generation Capacity [kW]: {solar_pv_gen_capacity}")
+print("Assumed Renewable Generation Capacity:", wind_gen_capacity)
+print(f"Wind [kW]: {wind_gen_capacity}")
+print(f"Solar PV [kW]: {solar_pv_gen_capacity}")
 print(f"Default Electrolyzer Plant Size [kW]: {default_electrolyzer_plant_size_kw}")
 
 # Prompt user to enter their own electrolyzer plant size or use the default
