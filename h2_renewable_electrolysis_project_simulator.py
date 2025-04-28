@@ -17,7 +17,7 @@ from fetch_hourly_generation_by_location import (
 # Prompt user for input
 city = input("Please enter the US city name: ")
 # city = "Houston"
-state = input("Please enter the US state abbreviation: ")
+state = input("Please enter the US state 2-letter abbreviation: ")
 # state = "TX"
 years = [
     2021,
