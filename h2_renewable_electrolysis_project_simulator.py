@@ -153,7 +153,7 @@ electrolyzer_efficiency = hydrogen_energy_density / electricity_input_per_kg_hyd
 default_electrolyzer_plant_size_kw = round(
     (wind_gen_capacity + solar_pv_gen_capacity)
     * yearly_capacity_factor_combined.mean()
-    * electrolyzer_efficiency
+    # * electrolyzer_efficiency # may not need to multiply by efficiency
 )
 print("Assumed Renewable Generation Capacity:", wind_gen_capacity)
 print(f"Wind [kW]: {wind_gen_capacity}")
